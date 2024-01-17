@@ -2,10 +2,11 @@ import click
 import os
 
 @click.group()
-def commands():
+def cli():
     pass
-#=====================================================================================
-# OPEN FILE
+
+# FILE RELATED FUNCTIONS: OPEN-FILE; FILTER-ITEMS
+# OPEN-FILE = Opens a file and returns its name and content as a list. If the file doesn't exist, creates an empty file.
 def open_file(file):
     filename = file if file is not None else "inventory.txt"
     if not os.path.exists(filename):
@@ -15,16 +16,20 @@ def open_file(file):
         item_list = f.read().splitlines()
     return filename, item_list
 
-#=====================================================================================
-# FILTER ITEMS
+
+
+# FILTER-ITEMS = Filters items based on the given criterion and method.
 @click.argument("method", type=click.Choice(["inclusive", "exclusive"]))
 def filter_items(item_list, filter_criterion, method):
     if method == "inclusive": return [item for item in item_list if filter_criterion in item]
 
     elif method == "exclusive": return [item for item in item_list if filter_criterion not in item]
+   
 
-#=====================================================================================
-# ADD = ADDS NEW ITEM TO THE FILE
+
+#=========================================================================================================================
+#COMMAND FUNCTIONS: ADD; DELETE; DISPLAY; SEARCH; ALTER;  
+# ADD = Adds a new item in the file:
 @click.command()
 @click.argument("file", type=click.Path(), required=False)
 @click.option("-i", "--id", prompt="Enter ID", help="ID of item")
@@ -37,8 +42,9 @@ def add(id, name, quantity, price, file):
     with open(filename, "a+") as f:
         f.write(f"ID: {id}, Name: {name}, Quantity: {quantity}, Price: ${price}\n")
 
-#=====================================================================================
-# DELETE = REMOVES ITEM FROM THE FILE BROKEN DELETES ALL BUT THE ONE WITH ID INPUT
+
+
+# DELETE = Remove item in the file based on its ID number:
 @click.command()
 @click.argument("item_id", type=int, required=True)
 def delete(item_id):
@@ -50,8 +56,9 @@ def delete(item_id):
         f.write("\n".join(updated_list))
         f.write("\n")
 
-#=====================================================================================
-# DISPLAY = PRINTS ALL THE FILE'S ITEMS 
+
+
+# DISPLAY = Prints all the file's items :
 @click.command()
 @click.argument("file", type=click.Path(exists=True), required=False)
 def display(file):
@@ -60,8 +67,9 @@ def display(file):
     for index, item in enumerate(item_list):
         click.echo(f"({index} - {item})")
 
-#=====================================================================================
-# SEARCH - SEARCHES ITEM BY ITS ID AND PRINTS 
+
+
+# SEARCH = Search item by its ID and prints it:
 @click.command()
 @click.argument("item_id", type=int, required=True)
 def search(item_id):
@@ -75,8 +83,9 @@ def search(item_id):
     else:
         click.echo(f"No item found with ID: {item_id}")
 
-#=====================================================================================
-# ALTER - ALTERS QUANTITY OR PRICE OF ITEM BY ITS ID - HAVE TO ALTER BOTH ATTRIBUTES
+
+
+# ALTER = Alters quantity or price of item by its ID:
 @click.command()
 @click.argument("item_id", type=int, required=True)
 @click.option("-q", "--quantity", type=int, help="New quantity of item")
@@ -116,12 +125,13 @@ def alter(item_id, quantity, price):
     click.echo(f"Item with ID {item_id} updated successfully")
     click.echo(f"({item})")
 
-#=====================================================================================
-commands.add_command(add)
-commands.add_command(delete)
-commands.add_command(display)
-commands.add_command(search)
-commands.add_command(alter)
+
+
+cli.add_command(add)
+cli.add_command(delete)
+cli.add_command(display)
+cli.add_command(search)
+cli.add_command(alter)
 
 if __name__ == "__main__":
-    commands()
+    cli()
