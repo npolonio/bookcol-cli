@@ -57,7 +57,7 @@ def add(id, name, quantity, price, file):
 
 
 
-#DELETE = Remove item in the file based on its ID number: BROKEN
+#DELETE = Remove item in the file based on its ID number:
 @click.command()
 @click.option("-i", "--item_id", type=int, required=True)
 def delete(item_id):
