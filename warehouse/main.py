@@ -1,28 +1,43 @@
 import click
 import os
+from item import Item
 
 @click.group()
 def cli():
     pass
 
-# FILE RELATED FUNCTIONS: OPEN-FILE; FILTER-ITEMS
+# FILE RELATED FUNCTIONS: OPEN-FILE; WRITE-FILE; FILTER-ITEMS
 # OPEN-FILE = Opens a file and returns its name and content as a list. If the file doesn't exist, creates an empty file.
-def open_file(file):
-    filename = file if file is not None else "inventory.txt"
+def open_file(filename=None):
+    default_filename = "inventory.txt"
+
+    if filename is None:
+        filename = default_filename
+
     if not os.path.exists(filename):
         with open(filename, "w") as f:
             f.write("")  # create an empty file if it doesn't exist
+
     with open(filename, "r") as f:
         item_list = f.read().splitlines()
+
     return filename, item_list
+
+
+#FILE = Writes on the file
+def write_file(file, action, message):
+    filename, item_list = open_file(file)
+
+    with open(filename, action) as f:
+        f.write(message + "\n")
 
 
 
 # FILTER-ITEMS = Filters items based on the given criterion and method.
+@click.command()
 @click.argument("method", type=click.Choice(["inclusive", "exclusive"]))
 def filter_items(item_list, filter_criterion, method):
     if method == "inclusive": return [item for item in item_list if filter_criterion in item]
-
     elif method == "exclusive": return [item for item in item_list if filter_criterion not in item]
    
 
@@ -39,8 +54,9 @@ def filter_items(item_list, filter_criterion, method):
 def add(id, name, quantity, price, file):
     filename, item_list = open_file(file)
 
-    with open(filename, "a+") as f:
-        f.write(f"ID: {id}, Name: {name}, Quantity: {quantity}, Price: ${price}\n")
+    new_item = Item(id, name, quantity, price)
+
+    write_file(filename, "a", str(new_item))
 
 
 
@@ -51,11 +67,9 @@ def delete(item_id):
     filename, item_list = open_file(None)
 
     updated_list = filter_items(item_list, f"ID: {item_id}", "exclusive")
-   
-    with open(filename, "w") as f:
-        f.write("\n".join(updated_list))
-        f.write("\n")
 
+    write_file(filename, "w", "\n".join(updated_list))
+    
 
 
 # DISPLAY = Prints all the file's items :
@@ -114,10 +128,8 @@ def alter(item_id, quantity, price):
 
         updated_list.append(item)
 
-    try:
-        with open(filename, "w") as f:
-            f.write("\n".join(updated_list))
-            f.write("\n")
+    try: write_file(filename, "w", "\n".join(updated_list))
+    
     except IOError as e:
         click.echo(f"Error writing to file: {e}")
         return
