@@ -6,8 +6,8 @@ from item import Item
 def cli():
     pass
 
-# FILE RELATED FUNCTIONS: OPEN-FILE; WRITE-FILE; FILTER-ITEMS
-# OPEN-FILE = Opens a file and returns its name and content as a list. If the file doesn't exist, creates an empty file.
+#FILE RELATED FUNCTIONS: OPEN-FILE; WRITE-FILE; FILTER-ITEMS
+#OPEN-FILE = Opens a file and returns its name and content as a list. If the file doesn't exist, creates an empty file.
 def open_file(filename=None):
     default_filename = "inventory.txt"
 
@@ -24,7 +24,7 @@ def open_file(filename=None):
     return filename, item_list
 
 
-#FILE = Writes on the file
+#WRITE-FILE = Writes on the file
 def write_file(file, action, message):
     filename, item_list = open_file(file)
 
@@ -33,18 +33,15 @@ def write_file(file, action, message):
 
 
 
-# FILTER-ITEMS = Filters items based on the given criterion and method.
-@click.command()
-@click.argument("method", type=click.Choice(["inclusive", "exclusive"]))
-def filter_items(item_list, filter_criterion, method):
-    if method == "inclusive": return [item for item in item_list if filter_criterion in item]
-    elif method == "exclusive": return [item for item in item_list if filter_criterion not in item]
-   
+#FILTER-ITEMS = Filters items based on the given criterion and method.
+def filter_items(item_list, filter_criterion):
+    return [item for item in item_list if filter_criterion in item]
+  
 
 
 #=========================================================================================================================
 #COMMAND FUNCTIONS: ADD; DELETE; DISPLAY; SEARCH; ALTER;  
-# ADD = Adds a new item in the file:
+#ADD = Adds a new item in the file:
 @click.command()
 @click.argument("file", type=click.Path(), required=False)
 @click.option("-i", "--id", prompt="Enter ID", help="ID of item")
@@ -60,19 +57,19 @@ def add(id, name, quantity, price, file):
 
 
 
-# DELETE = Remove item in the file based on its ID number:
+#DELETE = Remove item in the file based on its ID number: BROKEN
 @click.command()
-@click.argument("item_id", type=int, required=True)
+@click.option("-i", "--item_id", type=int, required=True)
 def delete(item_id):
     filename, item_list = open_file(None)
 
-    updated_list = filter_items(item_list, f"ID: {item_id}", "exclusive")
+    updated_list = [item for item in item_list if f"ID: {item_id}" not in item]
 
     write_file(filename, "w", "\n".join(updated_list))
     
 
 
-# DISPLAY = Prints all the file's items :
+#DISPLAY = Prints all the file's items:
 @click.command()
 @click.argument("file", type=click.Path(exists=True), required=False)
 def display(file):
@@ -83,13 +80,13 @@ def display(file):
 
 
 
-# SEARCH = Search item by its ID and prints it:
+#SEARCH = Search item by its ID and prints it: 
 @click.command()
-@click.argument("item_id", type=int, required=True)
+@click.option("-i", "--item_id", type=int, required=True)
 def search(item_id):
     filename, item_list = open_file(None)
 
-    matching_items = filter_items(item_list, f"ID: {item_id}", "inclusive")
+    matching_items = filter_items(item_list, f"ID: {item_id}")
 
     if matching_items:
         for item in matching_items:
@@ -99,9 +96,9 @@ def search(item_id):
 
 
 
-# ALTER = Alters quantity or price of item by its ID:
+#ALTER = Alters quantity or price of item by its ID:
 @click.command()
-@click.argument("item_id", type=int, required=True)
+@click.option("-i", "--item_id", type=int, required=True)
 @click.option("-q", "--quantity", type=int, help="New quantity of item")
 @click.option("-p", "--price", type=float, help="New price of item")
 def alter(item_id, quantity, price):
@@ -111,7 +108,7 @@ def alter(item_id, quantity, price):
     
     filename, item_list = open_file(None)
 
-    matching_item = filter_items(item_list, f"ID: {item_id}", "inclusive")
+    matching_item = filter_items(item_list, f"ID: {item_id}")
 
     if not matching_item:
         click.echo(f"No item found with ID: {item_id}")
@@ -128,14 +125,14 @@ def alter(item_id, quantity, price):
 
         updated_list.append(item)
 
-    try: write_file(filename, "w", "\n".join(updated_list))
-    
+    try:
+        write_file(filename, "w", "\n".join(updated_list))
     except IOError as e:
         click.echo(f"Error writing to file: {e}")
         return
 
     click.echo(f"Item with ID {item_id} updated successfully")
-    click.echo(f"({item})")
+    click.echo(f"({updated_list[-1]})")  # Use updated_list[-1] instead of item
 
 
 
