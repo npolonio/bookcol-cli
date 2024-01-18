@@ -1,35 +1,47 @@
-import click
-
 class Item:
     def __init__(self, id, name, quantity, price):
-        self.id = id
-        self.name = name
-        self.quantity = quantity
-        self.price = price
+        self._id = id
+        self._name = name
+        self._quantity = quantity
+        self._price = price
     
     def __str__(self):
-        return f"ID: {self.id}, Name: {self.name}, Quantity: {self.quantity}, Price: ${self.price}"
+        return f"ID: {self._id}, Name: {self._name}, Quantity: {self._quantity}, Price: ${self._price}"
     
-    def getId(self):
-        return self.__id
+    @property
+    def id(self):
+        return self._id
     
-    def getName(self):
-        return self.__name
+    @property
+    def name(self):
+        return self._name
     
-    def getQuantity(self):
-        return self.__quantity
+    @property
+    def quantity(self):
+        return self._quantity
     
-    def getPrice(self):
-        return self.__price
+    @property
+    def price(self):
+        return self._price
     
-    def setId(self, new_id):
-        self.__id = new_id
+    @id.setter
+    def id(self, new_id):
+        self._id = new_id
     
-    def setName(self, new_name):
-        self.__name = new_name
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
     
-    def setQuantity(self, new_quantity):
-        self.__quantity = new_quantity
+    @quantity.setter
+    def quantity(self, new_quantity):
+        self._quantity = new_quantity
     
-    def setPrice(self, new_price):
-        self.__price = new_price
+    @price.setter
+    def price(self, new_price):
+        self._price = new_price
+
+    def __iter__(self):
+        yield self._id
+        yield self._name
+        yield self._quantity
+        yield self._price
