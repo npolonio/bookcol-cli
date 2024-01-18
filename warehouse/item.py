@@ -1,3 +1,5 @@
+import click
+
 class Item:
     def __init__(self, id, name, quantity, price):
         self.id = id
@@ -6,8 +8,7 @@ class Item:
         self.price = price
     
     def __str__(self):
-         return f"ID: {self.id}, Name: {self.name}, 
-         Quantity: {self.quantity}, Price: ${self.price}"
+        return f"ID: {self.id}, Name: {self.name}, Quantity: {self.quantity}, Price: ${self.price}"
     
     def getId(self):
         return self.__id
