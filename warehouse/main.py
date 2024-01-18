@@ -19,7 +19,7 @@ def open_file(filename=None):
             f.write("")  # create an empty file if it doesn't exist
 
     with open(filename, "r") as f:
-        item_list = f.read().splitlines()
+        item_list = [Item(*line.split(', ')) for line in f.read().splitlines()]
 
     return filename, item_list
 
@@ -52,7 +52,7 @@ def add(id, name, quantity, price, file):
     filename, item_list = open_file(file)
 
     new_item = Item(id, name, quantity, price)
-
+    
     write_file(filename, "a", str(new_item))
 
 
@@ -96,7 +96,7 @@ def search(item_id):
 
 
 
-#ALTER = Alters quantity or price of item by its ID:
+#ALTER = Alters quantity or price of item by its ID: - Use Item class
 @click.command()
 @click.option("-i", "--item_id", type=int, required=True)
 @click.option("-q", "--quantity", type=int, help="New quantity of item")
@@ -106,33 +106,33 @@ def alter(item_id, quantity, price):
         click.echo("Please provide either --quantity (-q) or --price (-p). Use -h or --help for more information.")
         return
     
-    filename, item_list = open_file(None)
+    filename, item_list = open_file(None) 
 
-    matching_item = filter_items(item_list, f"ID: {item_id}")
+    #matching_items = [item for item in item_list if item.id == searching_item_id] #not able to find existing ID
+    
+    matching_items = filter_items(item_list, f"ID: {item_id}")
 
-    if not matching_item:
+
+    if not matching_items:
         click.echo(f"No item found with ID: {item_id}")
-        return  # Stop execution if no matching item is found
+        return
 
-    updated_list = []
-    for item in item_list:
-        if f"ID: {item_id}" in item:
-            if quantity is not None:
-                item = item.replace(f"Quantity: {item.split(', ')[2].split(': ')[1]}", f"Quantity: {quantity}")
+    matching_item = matching_items[0]
 
-            if price is not None:
-                item = item.replace(f"Price: {item.split(', ')[3].split(': ')[1]}", f"Price: ${price}")
-
-        updated_list.append(item)
+    if quantity is not None:
+        matching_item.quantity = quantity
+    
+    if price is not None:
+        matching_item.price = price
 
     try:
-        write_file(filename, "w", "\n".join(updated_list))
+        write_file(filename, "w", "\n".join(str(item) for item in item_list))
     except IOError as e:
         click.echo(f"Error writing to file: {e}")
         return
 
     click.echo(f"Item with ID {item_id} updated successfully")
-    click.echo(f"({updated_list[-1]})")  # Use updated_list[-1] instead of item
+    click.echo(f"({matching_item})")
 
 
 
