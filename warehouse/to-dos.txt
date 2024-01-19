@@ -1,12 +1,3 @@
-- Modify "validate_id" in InputValidator so when called should be: 
-                InputValidator.validate_id(id)
-And not:
-                if not InputValidator.validate_id(id): 
-                    click.echo('Invalid ID. Please provide a 4-digit integer.')
-                    return
-
-- Add input validation for price, quantity
-
 - Consider adding unit tests for your functions, especially for file-related operations and input parsing.
 
 - Improve the output formatting to make it more user-friendly, especially in the display function.
