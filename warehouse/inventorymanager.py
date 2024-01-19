@@ -1,6 +1,6 @@
 import json
 
-class Inventory:
+class InventoryManager:
     def __init__(self, file_path='inventory.txt'):
         self.file_path = file_path
 
