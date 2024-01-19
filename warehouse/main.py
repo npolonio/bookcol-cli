@@ -1,7 +1,7 @@
 import click
 import json
 from product import Product
-from inventory import Inventory
+from inventorymanager import InventoryManager
 from inputvalidator import InputValidator
 
 @click.group()
@@ -24,7 +24,7 @@ def add(id, name, quantity, price, location):
                 
     product = Product(id, name, quantity, float(price), location) 
 
-    inventory = Inventory() 
+    inventory = InventoryManager() 
     data = inventory.load_inventory()
     data.append(product.get_dict)
 
@@ -34,12 +34,10 @@ def add(id, name, quantity, price, location):
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to delete')
-def delete(id): #needs to say "ID not found" Raises error even after success (no such option: -i)
-    if not InputValidator.validate_id(id): 
-        click.echo('Invalid ID. Please provide a 4-digit integer.')
-        return
+def delete(id): #Prints 'Product deleted successfully.' even when provided with invalid ID; Raises Error even when performs successfully
+    InputValidator.validate_id(id)
 
-    inventory = Inventory()
+    inventory = InventoryManager()
     data = inventory.load_inventory()
     data = [item for item in data if item['id'] != id]
 
@@ -50,7 +48,7 @@ def delete(id): #needs to say "ID not found" Raises error even after success (no
 
 @cli.command()
 def display():
-    inventory = Inventory()
+    inventory = InventoryManager()
     data = inventory.load_inventory()
 
     click.echo(json.dumps(data, indent=2))
@@ -58,41 +56,39 @@ def display():
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
 def search(id):
-        if not InputValidator.validate_id(id): 
-            click.echo('Invalid ID. Please provide a 4-digit integer.')
-            return
-        
-        inventory = Inventory()
-        data = inventory.load_inventory()
+    InputValidator.validate_id(id)
 
-        result = [item for item in data if item['id'] == id]
+    inventory = InventoryManager()
+    data = inventory.load_inventory()
 
-        click.echo(json.dumps(result, indent=2))
+    result = [item for item in data if item['id'] == id]
+
+    click.echo(json.dumps(result, indent=2))
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
 @click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
 @click.option('-v', '--value', prompt=True, help='New value')
 def alter(id, attribute, value):
-    if not InputValidator.validate_id(id): 
-        click.echo('Invalid ID. Please provide a 4-digit integer.')
-        return
+    InputValidator.validate_id(id) #Checks if ID is valid
 
-    inventory = Inventory() 
-    data = inventory.load_inventory() 
+    inventory_manager = InventoryManager() #Creates instance of InventoryManager
+    data = inventory_manager.load_inventory() #Loads info in inventory.txt through InventoryManager in a var "data"
 
-    item_found = False
-    for item in data: 
-        if item['id'] == id: 
-                item[attribute] = value
-                item_found = True
-                break
+    item_found = False #Creates a check var "item_found"
+    for item in data: #Iterates through info in data by item - instance of Product
+        if item['id'] == id: #Checks if present item share the same id value as provided in function call
+                is_valid = InputValidator.validate_attribute(attribute, value)
+                if(is_valid):
+                    item[attribute] = value #Changes original attribute value with the one provided in function call
+                    item_found = True #Changes value of check var "item_found" to communicate the process has been successful
+                    break #Exists condition
         
-    if not item_found: 
-        click.echo(f'Product with ID {id} not found in the inventory.')
+    if not item_found: #If check var "item_found" value not changed demonstrates that item was not found
+        click.echo(f'Product with ID {id} not found in the inventory.') #Prints message
+        return #Finishes call
 
-    inventory.save_inventory(data)
-    click.echo('Product altered successfully.')
+    inventory_manager.save_inventory(data) #Saves new information into inventory.txt through InventoryManager
+    click.echo('Product altered successfully.') #Prints message
 
 if __name__ == '__main__':
-    cli()
