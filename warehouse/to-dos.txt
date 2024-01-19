@@ -1,0 +1,17 @@
+- Implement better error handling, especially when dealing with file operations.
+
+- Consider adding logging statements to track the flow of your program and any errors that may occur. This can be helpful for debugging.
+
+- Add input validation to ensure that user-provided input is within expected ranges or formats.
+
+- Consider adding unit tests for your functions, especially for file-related operations and input parsing.
+
+- Improve the output formatting to make it more user-friendly, especially in the display function.
+
+- Implement filters in search (search by name, by price, by quantity) and print every item compliant
+
+- Check how implement class User (MAYBE)
+                
+- Eventually scale to MySql
+
+- Include more detailed documentation, both in the form of comments and docstrings, explaining the purpose of functions and how to use them.
