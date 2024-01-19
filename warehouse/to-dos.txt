@@ -1,16 +1,24 @@
-- Implement better error handling, especially when dealing with file operations.
+- Modify "validate_id" in InputValidator so when called should be: 
+                InputValidator.validate_id(id)
+And not:
+                if not InputValidator.validate_id(id): 
+                    click.echo('Invalid ID. Please provide a 4-digit integer.')
+                    return
 
-- Consider adding logging statements to track the flow of your program and any errors that may occur. This can be helpful for debugging.
-
-- Add input validation to ensure that user-provided input is within expected ranges or formats.
+- Add input validation for price, quantity
 
 - Consider adding unit tests for your functions, especially for file-related operations and input parsing.
 
 - Improve the output formatting to make it more user-friendly, especially in the display function.
 
+=================================================================================================================================================
+
+
+- Implement better error handling, especially when dealing with file operations.
+
 - Implement filters in search (search by name, by price, by quantity) and print every item compliant
 
-- Check how implement class User (MAYBE)
+- Class User ?
                 
 - Eventually scale to MySql
 
