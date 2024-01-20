@@ -19,3 +19,4 @@ class Product:
             "price": self.price,
             "location": self.location
         }
+
