@@ -1,12 +1,21 @@
 import click
 import json
 from product import Product
-from inventorymanager import InventoryManager
-from inputvalidator import InputValidator
+from inventory_manager import InventoryManager
+from input_validator import InputValidator
 
 @click.group()
 def cli():
     pass
+
+@cli.command()
+def display():
+    inventory = InventoryManager()
+    data = inventory.load_inventory()
+   
+    click.echo(json.dumps(data, indent=2))
+   
+
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID (4 digits long)')
@@ -14,14 +23,9 @@ def cli():
 @click.option('-q', '--quantity', prompt=True, type=int, help='Product Quantity')
 @click.option('-p', '--price', prompt=True, type=float, help='Product Price')
 @click.option('-l', '--location', prompt=True, type=str, help='Product Location')
-def add(id, name, quantity, price, location):
-    try:
-        if not (isinstance(id, int) and InputValidator.validate_id(id)):
-            raise click.Abort('Error: {} is not a valid ID - It should be a 4 digit long integer.'.format(id))
-    except click.Abort as e:
-            click.echo(e)
-            return
-                
+def add(id, name, quantity, price, location): 
+    InputValidator.validate_id(id)
+
     product = Product(id, name, quantity, float(price), location) 
 
     inventory = InventoryManager() 
@@ -32,30 +36,31 @@ def add(id, name, quantity, price, location):
 
     click.echo('Product added successfully.')
 
+
+
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to delete')
-def delete(id): #Prints 'Product deleted successfully.' even when provided with invalid ID; Raises Error even when performs successfully
-    InputValidator.validate_id(id)
-
+def delete(id): 
+    if not InputValidator.validate_id(id):
+        click.echo(f'Invalid ID: {id}')
+        return
+    
     inventory = InventoryManager()
     data = inventory.load_inventory()
-    data = [item for item in data if item['id'] != id]
+    
+    filtered_data = [item for item in data if item['id'] != id]
 
-    inventory.save_inventory(data)
+    if len(filtered_data) == len(data):
+        click.echo(f'Product with ID {id} not found in the inventory.')
+    else:
+        inventory.save_inventory(filtered_data)
+        click.echo(f'Product with ID {id} deleted successfully.')
 
-    click.echo('Product deleted successfully.')
-    display()
 
-@cli.command()
-def display():
-    inventory = InventoryManager()
-    data = inventory.load_inventory()
-
-    click.echo(json.dumps(data, indent=2))
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
-def search(id):
+def search(id): 
     InputValidator.validate_id(id)
 
     inventory = InventoryManager()
@@ -63,7 +68,13 @@ def search(id):
 
     result = [item for item in data if item['id'] == id]
 
-    click.echo(json.dumps(result, indent=2))
+    if not result:
+        click.echo(f'Product with ID {id} not found in the inventory.')
+    else:
+        click.echo(json.dumps(result, indent=2))
+
+
+
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
@@ -91,4 +102,6 @@ def alter(id, attribute, value):
     inventory_manager.save_inventory(data) #Saves new information into inventory.txt through InventoryManager
     click.echo('Product altered successfully.') #Prints message
 
+
 if __name__ == '__main__':
+    cli()
