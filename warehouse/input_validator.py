@@ -14,9 +14,11 @@ class InputValidator:
 
         
     @staticmethod   
-    def validate_id(input_id):#Returns True if input_id is a valid ID
+    def validate_id(input_id):
         is_valid = re.match(r"^\d{4}$", str(input_id))
-        InputValidator.validation(is_valid, 'Invalid ID. Please provide a 4-digit number')
+        if not is_valid:
+            click.echo('Invalid ID. Please provide a 4-digit number')
+        return is_valid
 
 
 
@@ -41,4 +43,3 @@ class InputValidator:
         elif input_attribute == "quantity": return InputValidator.validate_quantity(input_value)
 
         elif input_attribute == "price": return InputValidator.validate_price(input_value)
-
