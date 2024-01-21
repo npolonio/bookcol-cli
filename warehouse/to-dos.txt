@@ -1,5 +1,5 @@
-- Consider adding unit tests for your functions, especially for file-related operations and input parsing.
-
+- Add more tests
+- Add Error Handlers?
 - Improve the output formatting to make it more user-friendly, especially in the display function.
 
 =================================================================================================================================================
