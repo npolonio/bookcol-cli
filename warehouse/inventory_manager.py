@@ -20,3 +20,5 @@ class InventoryManager:
     def save_inventory(self, data):
         with open(self.file_path, 'w') as file:
             json.dump(data, file, indent=2)
+
+            
