@@ -1,3 +1,5 @@
+import click
+
 class Product:
     def __init__(self, _id, name, quantity, price, location):
         self._id = _id
@@ -19,4 +21,11 @@ class Product:
             "price": self.price,
             "location": self.location
         }
+    
+    def format_output(self): 
+        click.echo(f"Product found with ID {self.id}:")
+        click.echo(f"Product Name: {self.name}")
+        click.echo(f"Product Quantity: {self.quantity}")
+        click.echo(f"Product Price: {self.price}")
+        click.echo(f"Product Location: {self.location}")
 
