@@ -8,13 +8,18 @@ from input_validator import InputValidator
 def cli():
     pass
 
+
+
 @cli.command()
 def display():
     inventory = InventoryManager()
     data = inventory.load_inventory()
-   
-    click.echo(json.dumps(data, indent=2))
-   
+
+    for item_data in data:
+        product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
+        product.format_output()
+        click.echo('-' * 20)
+
 
 
 @cli.command()
@@ -60,7 +65,7 @@ def delete(id):
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
-def search(id): 
+def search(id):
     InputValidator.validate_id(id)
 
     inventory = InventoryManager()
@@ -71,7 +76,9 @@ def search(id):
     if not result:
         click.echo(f'Product with ID {id} not found in the inventory.')
     else:
-        click.echo(json.dumps(result, indent=2))
+        for item_data in result:
+            product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
+            product.format_output()
 
 
 
@@ -81,27 +88,29 @@ def search(id):
 @click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
 @click.option('-v', '--value', prompt=True, help='New value')
 def alter(id, attribute, value):
-    InputValidator.validate_id(id) #Checks if ID is valid
+    InputValidator.validate_id(id)
 
-    inventory_manager = InventoryManager() #Creates instance of InventoryManager
-    data = inventory_manager.load_inventory() #Loads info in inventory.txt through InventoryManager in a var "data"
+    inventory_manager = InventoryManager() 
+    data = inventory_manager.load_inventory()
 
-    item_found = False #Creates a check var "item_found"
-    for item in data: #Iterates through info in data by item - instance of Product
-        if item['id'] == id: #Checks if present item share the same id value as provided in function call
+    item_found = False 
+    for item in data: 
+        if item['id'] == id: 
                 is_valid = InputValidator.validate_attribute(attribute, value)
                 if(is_valid):
-                    item[attribute] = value #Changes original attribute value with the one provided in function call
-                    item_found = True #Changes value of check var "item_found" to communicate the process has been successful
-                    break #Exists condition
+                    item[attribute] = value 
+                    item_found = True
+                    break
         
-    if not item_found: #If check var "item_found" value not changed demonstrates that item was not found
-        click.echo(f'Product with ID {id} not found in the inventory.') #Prints message
-        return #Finishes call
+    if not item_found:
+        click.echo(f'Product with ID {id} not found in the inventory.')
+        return 
 
-    inventory_manager.save_inventory(data) #Saves new information into inventory.txt through InventoryManager
-    click.echo('Product altered successfully.') #Prints message
+    inventory_manager.save_inventory(data)
+    click.echo('Product altered successfully.')
 
 
 if __name__ == '__main__':
     cli()
+
+    
