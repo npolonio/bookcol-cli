@@ -1,6 +1,6 @@
 - Add more tests
 - Add Error Handlers?
-- Improve the output formatting to make it more user-friendly, especially in the display function.
+- Format output
 
 =================================================================================================================================================
 
