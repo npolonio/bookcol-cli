@@ -19,8 +19,6 @@ def test_search_command():
     result = runner.invoke(cli, ['search', '-i', '1234'])
     assert result.exit_code == 0
     assert 'TestProduct' in result.output  # Assuming product name is displayed in the search result
-
-# Add more test cases as needed
     
 def test_alter_command():
     # Assuming there's a product with ID 1234 in the inventory
@@ -46,8 +44,6 @@ def test_delete_command():
     assert result.exit_code == 0
     assert 'Product with ID 5678 not found in the inventory.' in result.output
     
-
-
 if __name__ == '__main__':
     test_add_command()
     test_display_command()
