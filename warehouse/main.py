@@ -1,5 +1,4 @@
 import click
-#import json
 from product import Product
 from inventory_manager import InventoryManager
 from input_validator import InputValidator
@@ -25,19 +24,33 @@ def display():
 @click.option('-p', '--price', prompt=True, type=str, help='Product Price')
 @click.option('-l', '--location', prompt=True, type=str, help='Product Location')
 def add(id, name, quantity, price, location):
-    InputValidator.validate_id(id)
-    InputValidator.validate_quantity(quantity)
-    InputValidator.validate_price(price)
+    if not InputValidator.validate_id(id):
+        #click.echo('Invalid product ID. Please provide a valid 4-digit number')
+        return
 
-    product = Product(id, name, quantity, price, location) 
-
+    if not InputValidator.validate_quantity(quantity):
+        click.echo('Invalid product quantity. Please provide a valid value.')
+        return
+    
+    if not InputValidator.validate_price(price):
+        click.echo('Invalid product price. Please provide a valid value')
+        return
+   
     inventory = InventoryManager() 
     data = inventory.load_inventory()
+
+    for item in data: 
+        if item['id'] == id:
+            click.echo(f'Product with ID {id} already exists in the inventory.')
+            return
+        
+    product = Product(id, name, quantity, price, location)
     data.append(product.get_dict)
 
     inventory.save_inventory(data)
 
     click.echo('Product added successfully.')
+    return
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to delete')
@@ -102,5 +115,3 @@ def alter(id, attribute, value):
 
 if __name__ == '__main__':
     cli()
-
-    
