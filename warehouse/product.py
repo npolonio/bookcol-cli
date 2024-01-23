@@ -29,3 +29,9 @@ class Product:
         click.echo(f"Product Price: {self.price}")
         click.echo(f"Product Location: {self.location}")
 
+    @classmethod
+    def create_from_dict(cls, data):
+        return cls(data['id'], data['name'], data['quantity'],
+                   data['price'], data['location'])
+
+
