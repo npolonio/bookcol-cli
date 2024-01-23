@@ -34,3 +34,4 @@ class InputValidator:
             return InputValidator.validate_quantity(input_value)
         elif input_attribute == "price": 
             return InputValidator.validate_price(input_value)
+
