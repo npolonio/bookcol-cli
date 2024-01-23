@@ -1,8 +1,14 @@
 import json
+import os
 
 class InventoryManager:
     def __init__(self, file_path='inventory.txt'):
         self.file_path = file_path
+        self.check_file_path()
+
+    def check_file_path(self):
+        if not os.path.isfile(self.file_path):
+            self.create_file()
 
     def create_file(self):
         with open(self.file_path, 'w') as file:
@@ -20,5 +26,3 @@ class InventoryManager:
     def save_inventory(self, data):
         with open(self.file_path, 'w') as file:
             json.dump(data, file, indent=2)
-
-            
