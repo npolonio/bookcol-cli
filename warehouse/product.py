@@ -33,5 +33,3 @@ class Product:
     def create_from_dict(cls, data):
         return cls(data['id'], data['name'], data['quantity'],
                    data['price'], data['location'])
-
-
