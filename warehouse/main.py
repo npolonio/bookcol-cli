@@ -1,5 +1,5 @@
 import click
-import json
+#import json
 from product import Product
 from inventory_manager import InventoryManager
 from input_validator import InputValidator
@@ -8,30 +8,28 @@ from input_validator import InputValidator
 def cli():
     pass
 
-
-
 @cli.command()
 def display():
     inventory = InventoryManager()
     data = inventory.load_inventory()
 
     for item_data in data:
-        product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
+        product = Product.create_from_dict(item_data)
         product.format_output()
         click.echo('-' * 20)
-
-
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID (4 digits long)')
 @click.option('-n', '--name', prompt=True, type=str, help='Product Name')
 @click.option('-q', '--quantity', prompt=True, type=int, help='Product Quantity')
-@click.option('-p', '--price', prompt=True, type=float, help='Product Price')
+@click.option('-p', '--price', prompt=True, type=str, help='Product Price')
 @click.option('-l', '--location', prompt=True, type=str, help='Product Location')
-def add(id, name, quantity, price, location): 
+def add(id, name, quantity, price, location):
     InputValidator.validate_id(id)
+    InputValidator.validate_quantity(quantity)
+    InputValidator.validate_price(price)
 
-    product = Product(id, name, quantity, float(price), location) 
+    product = Product(id, name, quantity, price, location) 
 
     inventory = InventoryManager() 
     data = inventory.load_inventory()
@@ -40,8 +38,6 @@ def add(id, name, quantity, price, location):
     inventory.save_inventory(data)
 
     click.echo('Product added successfully.')
-
-
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to delete')
@@ -61,8 +57,6 @@ def delete(id):
         inventory.save_inventory(filtered_data)
         click.echo(f'Product with ID {id} deleted successfully.')
 
-
-
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
 def search(id):
@@ -79,9 +73,6 @@ def search(id):
         for item_data in result:
             product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
             product.format_output()
-
-
-
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
@@ -108,7 +99,6 @@ def alter(id, attribute, value):
 
     inventory_manager.save_inventory(data)
     click.echo('Product altered successfully.')
-
 
 if __name__ == '__main__':
     cli()
