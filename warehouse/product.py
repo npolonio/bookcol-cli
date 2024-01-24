@@ -1,5 +1,5 @@
 import click
-
+#Do I need a __str__, a get_dict and a format_output?
 class Product:
     def __init__(self, _id, name, quantity, price, location):
         self._id = _id
