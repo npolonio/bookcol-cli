@@ -2,7 +2,8 @@ import re
 import click
 import logging
 
-logging.basicConfig(filename='inventory.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='inventory.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 class InputValidator: 
     @staticmethod
@@ -15,7 +16,7 @@ class InputValidator:
         return False
                 
     @staticmethod   
-    def validate_id(input_id):
+    def validate_id(input_id):#Could I refactor this method so it uses 'validation'?
         is_valid = re.match(r"^\d{4}$", str(input_id))
         if not is_valid:
             click.echo('Error: Invalid ID. Please provide a 4-digit number')
@@ -33,11 +34,10 @@ class InputValidator:
         return InputValidator.validation(is_valid, 'Invalid Price. Please provide a number')
 
     @staticmethod
-    def validate_attribute(input_attribute, input_value):
+    def validate_attribute(input_attribute, input_value): #Could I move this check to the alter command?
         if input_attribute in ["name", "location"] : 
             return True
         elif input_attribute == "quantity": 
             return InputValidator.validate_quantity(input_value)
         elif input_attribute == "price": 
             return InputValidator.validate_price(input_value)
-            
