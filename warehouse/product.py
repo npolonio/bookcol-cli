@@ -8,6 +8,9 @@ class Product:
         self.price = price
         self.location = location
 
+    def __str__(self):
+        return f'{self._id}, {self.name}, {self.quantity}, {self.price}, {self.location}'
+
     @property
     def id(self):
         return self._id
