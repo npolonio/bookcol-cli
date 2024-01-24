@@ -2,7 +2,8 @@ import json
 import os
 import logging
 
-logging.basicConfig(filename='inventory.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='inventory.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 class InventoryManager:
     def __init__(self, file_path='inventory.txt'):
@@ -30,4 +31,3 @@ class InventoryManager:
         with open(self.file_path, 'w') as file:
             json.dump(data, file, indent=2)
         logging.info('Inventory saved successfully')
-        
