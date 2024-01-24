@@ -21,15 +21,18 @@ def load_inventory_data(inventory):
         logging.error(message)
         return []
     
+
 def find_item_by_id(data, id):
     for item in data:
         if item['id'] == id:
             return item
     return None
 
+
 def update_item_attribute(item, attribute, value):
     if InputValidator.validate_attribute(attribute, value):
         item[attribute] = value
+
 
 def save_inventory(inventory, data):
     try:
@@ -38,6 +41,7 @@ def save_inventory(inventory, data):
         message = f'Error saving inventory: {str(e)}'
         click.echo(message)
         logging.error(message)
+
 
 def validate_inputs(id, quantity, price): 
     if not InputValidator.validate_id(id):
@@ -53,15 +57,59 @@ def validate_inputs(id, quantity, price):
     
     return True
 
+
 def create_product(id, name, quantity, price, location):
     return Product(id, name, quantity, price, location)
+
 
 def add_product_to_inventory(data, product, inventory):
     data.append(product.get_dict)
     inventory.save_inventory(data)
 
 
+def handle_invalid_id(id):
+    message = f'Invalid ID: {id}'
+    click.echo(message)
+    logging.error(message)
+
+
+def handle_product_not_found(id):
+    message = f'Product with ID {id} not found in the inventory.'
+    click.echo(message)
+    logging.error(message)
+
+
+def handle_deletion_canceled():
+    message = 'Deletion canceled.'
+    click.echo(message)
+    logging.info(message)
+
+
+def handle_deletion_success(id):
+    click.echo(f'Product with ID {id} deleted successfully.')
+    logging.info(f'Product deleted: ID: {id}')
+
+
+def filter_products(data, id, min_price, max_price, location):
+    results = data
+
+    if id is not None:
+        results = [item for item in results if item['id'] == id]
+
+    if min_price is not None:
+        results = [item for item in results if item.get('price', 0) >= min_price]
+
+    if max_price is not None:
+        results = [item for item in results if item.get('price', float('inf')) <= max_price]
+
+    if location:
+        results = [item for item in results if item.get('location', '') == location]
+
+    return results
+
+
 # COMMANDS
+
 
 @cli.command()
 @click.option('--sort-by', type=click.Choice(['id', 'name', 'quantity', 'price', 'location']), help='Sort products by the specified attribute')
@@ -81,6 +129,7 @@ def display(sort_by):
         product = Product.create_from_dict(item_data)
         product.format_output()
         click.echo('-' * 20)
+
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID (4 digits long)')
@@ -106,37 +155,34 @@ def add(id, name, quantity, price, location):
     logging.info(f'Product added: {product}')
     return
 
+
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to delete')
-def delete(id): # REFACTOR
+def delete(id):
     if not InputValidator.validate_id(id):
-        click.echo(f'Invalid ID: {id}')
+        handle_invalid_id(id)
         return
     
     inventory = InventoryManager()
     data = load_inventory_data(inventory)
     
-    product_to_delete = next((item for item in data if item['id'] == id), None)
+    product_to_delete = find_item_by_id(data, id)
 
     if not product_to_delete:
-        message = f'Product with ID {id} not found in the inventory.'
-        click.echo(message)
-        logging.error(message)
+        handle_product_not_found(id)
         return
     
     confirmation = click.confirm(f'Are you sure you want to delete the product with ID {id}?')
     
     if not confirmation:
-        message = 'Deletion canceled.'
-        click.echo(message)
-        logging.info(message)
+        handle_deletion_canceled()
         return
 
     filtered_data = [item for item in data if item['id'] != id]
     
-    inventory.save_inventory(filtered_data)
-    click.echo(f'Product with ID {id} deleted successfully.')
-    logging.info(f'Product deleted: ID: {id}')
+    save_inventory(inventory, filtered_data)
+    handle_deletion_success(id)
+
 
 @cli.command()
 @click.option('-i', '--id', type=int, help='Product ID to search')
@@ -168,6 +214,7 @@ def search(id, min_price, max_price, location): # REFACTOR
             product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
             product.format_output()
 
+
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
 @click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
@@ -189,6 +236,7 @@ def alter(id, attribute, value):
         click.echo(message)
         logging.info(message)
 
+
 @cli.command()
 def inter():
     click.echo('Entering interactive mode. Type "exit" to quit.')
@@ -205,6 +253,8 @@ def inter():
         except SystemExit as e:
             if str(e) != '0': click.echo('Invalid command. Type "exit" to quit.')
 
+
 if __name__ == '__main__':
     cli()
-  
+
+ 
