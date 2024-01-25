@@ -4,13 +4,17 @@ from product import Product
 from inventory_manager import InventoryManager
 from input_validator import InputValidator
 
+
 logging.basicConfig(filename='inventory.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 @click.group()
 def cli():
     pass
 
+
 # EXTRACTED FUNCTIONS: 
+
 
 def load_inventory_data(inventory): 
     try: 
@@ -63,7 +67,7 @@ def create_product(id, name, quantity, price, location):
 
 
 def add_product_to_inventory(data, product, inventory):
-    data.append(product.get_dict)
+    data.append(product.to_dict)
     inventory.save_inventory(data)
 
 
@@ -81,12 +85,16 @@ def handle_product_not_found(id):
 
 def handle_deletion_canceled():
     message = 'Deletion canceled.'
+    click.echo('-' * 20)
     click.echo(message)
+    click.echo('-' * 20)
     logging.info(message)
 
 
 def handle_deletion_success(id):
+    click.echo('-' * 20)
     click.echo(f'Product with ID {id} deleted successfully.')
+    click.echo('-' * 20)
     logging.info(f'Product deleted: ID: {id}')
 
 
@@ -152,6 +160,7 @@ def display(sort_by):
 
     if sort_by: data.sort(key=lambda x: x.get(sort_by, ''))
 
+    click.echo('-' * 20)
     for item_data in data:
         product = Product.create_from_dict(item_data)
         product.format_output()
@@ -178,7 +187,9 @@ def add(id, name, quantity, price, location):
     product = create_product(id, name, quantity, price, location)
     add_product_to_inventory(data, product, inventory)
 
+    click.echo('-' * 20)
     click.echo('Product added successfully.')
+    click.echo('-' * 20)
     logging.info(f'Product added: {product}')
     return
 
@@ -225,7 +236,9 @@ def search(id, min_price, max_price, location):
 
     results = filter_results(data, id, min_price, max_price, location)
 
+    click.echo('-' * 20)
     display_results(results)
+    click.echo('-' * 20)
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
@@ -240,12 +253,16 @@ def alter(id, attribute, value):
     if item:
         update_item_attribute(item, attribute, value)
         save_inventory(inventory, data)
+        click.echo('-' * 20)
         click.echo('Product altered successfully.')
+        click.echo('-' * 20)
         logging.info(f'Product altered - ID: {id}')
 
     else:
         message = f'Product with ID {id} not found in the inventory.'
+        click.echo('-' * 20)
         click.echo(message)
+        click.echo('-' * 20)
         logging.info(message)
 
 
