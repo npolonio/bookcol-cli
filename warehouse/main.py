@@ -1,5 +1,6 @@
 import click
 import logging
+import json
 from product import Product
 from inventory_manager import InventoryManager
 from input_validator import InputValidator
@@ -13,7 +14,72 @@ def cli():
     pass
 
 
-# EXTRACTED FUNCTIONS: 
+# FUNCTIONS ======================================================================================================================================== 
+
+
+# BACKUP/RESTORE ====================================================================================================================================
+
+
+def backup_data(inventory, filename):
+    try:
+        data = load_inventory_data(inventory)
+        inventory.save_inventory(data, filename)
+        message = f'Backup successful. Data saved to {filename}.'
+        click.echo(message)
+        logging.info(message)
+    except Exception as e:
+        message = f'Error during backup: {str(e)}'
+        click.echo(message)
+        logging.error(message)
+
+
+def restore_data(filename):
+    try:
+        with open(filename, 'r') as file:
+            data = json.load(file)
+        message = 'Restore successful. Data loaded from backup.'
+        click.echo(message)
+        logging.info(message)
+        return data
+    except FileNotFoundError:
+        message = 'Backup file not found. Unable to restore.'
+        click.echo(message)
+        logging.info(message)
+        return []
+    except Exception as e:
+        message = f'Error during restore: {str(e)}'
+        click.echo(message)
+        logging.info(message)
+        return []
+
+
+def backup_inventory(inventory):
+    try:
+        data = load_inventory_data(inventory)
+        backup_filename = 'inventory_backup.json'
+        backup_data(data, backup_filename)
+    except Exception as e:
+        message = f'Error during backup: {str(e)}'
+        click.echo(message)
+        logging.error(message)
+
+
+def restore_inventory(inventory):
+    try:
+        backup_filename = 'inventory_backup.json'
+        restored_data = restore_data(backup_filename)
+        if restored_data:
+            inventory.save_inventory(restored_data)
+            message = 'Inventory restored successfully.'
+            click.echo(message)
+            logging.info(message)
+    except Exception as e:
+        message = f'Error during restore: {str(e)}'
+        click.echo(message)
+        logging.error(message)
+
+
+# INVENTORY FILE MANIPULATORS =========================================================================================================================
 
 
 def load_inventory_data(inventory): 
@@ -25,13 +91,6 @@ def load_inventory_data(inventory):
         logging.error(message)
         return []
     
-
-def find_item_by_id(data, id):
-    for item in data:
-        if item['id'] == id:
-            return item
-    return None
-
 
 def update_item_attribute(item, attribute, value):
     if InputValidator.validate_attribute(attribute, value):
@@ -47,21 +106,6 @@ def save_inventory(inventory, data):
         logging.error(message)
 
 
-def validate_inputs(id, quantity, price): 
-    if not InputValidator.validate_id(id):
-        return False
-
-    if not InputValidator.validate_quantity(quantity):
-        click.echo('Invalid product quantity. Please provide a valid value.')
-        return False
-    
-    if not InputValidator.validate_price(price):
-        click.echo('Invalid product price. Please provide a valid value')
-        return False
-    
-    return True
-
-
 def create_product(id, name, quantity, price, location):
     return Product(id, name, quantity, price, location)
 
@@ -69,6 +113,9 @@ def create_product(id, name, quantity, price, location):
 def add_product_to_inventory(data, product, inventory):
     data.append(product.to_dict)
     inventory.save_inventory(data)
+
+
+# HANDLERS ====================================================================================================================================================
 
 
 def handle_invalid_id(id):
@@ -95,7 +142,17 @@ def handle_deletion_success(id):
     click.echo('-' * 20)
     click.echo(f'Product with ID {id} deleted successfully.')
     click.echo('-' * 20)
-    logging.info(f'Product deleted: ID: {id}')
+    logging.info(f'Product deleted: ID: {id}.')
+
+
+# FILTERS ====================================================================================================================================================
+
+
+def find_item_by_id(data, id): 
+    for item in data:
+        if item['id'] == id:
+            return item
+    return None
 
 
 def filter_results(data, id, min_price, max_price, location):
@@ -116,7 +173,7 @@ def filter_results(data, id, min_price, max_price, location):
     return results
 
 
-def filter_by_id(data, id):
+def filter_by_id(data, id): # Can I merge it with find_item_by_id?
     return [item for item in data if item['id'] == id]
 
 
@@ -132,6 +189,9 @@ def filter_by_location(data, location):
     return [item for item in data if item.get('location', '') == location]
 
 
+# DISPLAYER ====================================================================================================================================================
+
+
 def display_results(results):
     if not results: 
         message = 'No products found matching the specified criteria.'
@@ -143,7 +203,25 @@ def display_results(results):
             product.format_output()
 
 
-# COMMANDS
+# VALIDATORS =================================================================================================================================================
+            
+
+def validate_inputs(id, quantity, price): 
+    if not InputValidator.validate_id(id):
+        return False
+
+    if not InputValidator.validate_quantity(quantity):
+        click.echo('Invalid product quantity. Please provide a valid value.')
+        return False
+    
+    if not InputValidator.validate_price(price):
+        click.echo('Invalid product price. Please provide a valid value.')
+        return False
+    
+    return True
+
+
+# COMMANDS ====================================================================================================================================================
 
 
 @cli.command()
@@ -153,7 +231,7 @@ def display(sort_by):
     data = load_inventory_data(inventory)
 
     if not data:
-        message = 'No products found in the inventory'
+        message = 'No products found in the inventory.'
         click.echo(message)
         logging.info(message)
         return
@@ -190,7 +268,7 @@ def add(id, name, quantity, price, location):
     click.echo('-' * 20)
     click.echo('Product added successfully.')
     click.echo('-' * 20)
-    logging.info(f'Product added: {product}')
+    logging.info(f'Product added: {product}.')
     return
 
 
@@ -240,6 +318,7 @@ def search(id, min_price, max_price, location):
     display_results(results)
     click.echo('-' * 20)
 
+
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
 @click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
@@ -256,7 +335,7 @@ def alter(id, attribute, value):
         click.echo('-' * 20)
         click.echo('Product altered successfully.')
         click.echo('-' * 20)
-        logging.info(f'Product altered - ID: {id}')
+        logging.info(f'Product altered - ID: {id}.')
 
     else:
         message = f'Product with ID {id} not found in the inventory.'
@@ -267,7 +346,19 @@ def alter(id, attribute, value):
 
 
 @cli.command()
-def inter():
+def backup():
+    inventory = InventoryManager()
+    backup_inventory(inventory)
+
+
+@cli.command()
+def restore():
+    inventory = InventoryManager()
+    restore_inventory(inventory)
+
+
+@cli.command()
+def interact():
     click.echo('Entering interactive mode. Type "exit" to quit.')
 
     while True:
