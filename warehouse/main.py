@@ -90,22 +90,49 @@ def handle_deletion_success(id):
     logging.info(f'Product deleted: ID: {id}')
 
 
-def filter_products(data, id, min_price, max_price, location):
-    results = data
+def filter_results(data, id, min_price, max_price, location):
+    results = []
 
-    if id is not None:
-        results = [item for item in results if item['id'] == id]
+    if id: 
+        results = filter_by_id(data, id)
 
-    if min_price is not None:
-        results = [item for item in results if item.get('price', 0) >= min_price]
+    if min_price is not None: 
+        results = filter_by_min_price(results or data, min_price)
 
-    if max_price is not None:
-        results = [item for item in results if item.get('price', float('inf')) <= max_price]
+    if max_price is not None: 
+        results = filter_by_max_price(results or data, max_price)
 
-    if location:
-        results = [item for item in results if item.get('location', '') == location]
+    if location: 
+        results = filter_by_location(results or data, location)
 
     return results
+
+
+def filter_by_id(data, id):
+    return [item for item in data if item['id'] == id]
+
+
+def filter_by_min_price(data, min_price):
+    return [item for item in data if item.get('price', 0) >= min_price]
+
+
+def filter_by_max_price(data, max_price):
+    return [item for item in data if item.get('price', float('inf')) <= max_price]
+
+
+def filter_by_location(data, location):
+    return [item for item in data if item.get('location', '') == location]
+
+
+def display_results(results):
+    if not results: 
+        message = 'No products found matching the specified criteria.'
+        click.echo(message)
+        logging.error(message)
+    else:
+        for item_data in results:
+            product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
+            product.format_output()
 
 
 # COMMANDS
@@ -185,35 +212,20 @@ def delete(id):
 
 
 @cli.command()
-@click.option('-i', '--id', type=int, help='Product ID to search')
+@click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
 @click.option('--min-price', type=float, help='Minimum price for filtering')
 @click.option('--max-price', type=float, help='Maximum price for filtering')
 @click.option('-l', '--location', type=str, help='Location for filtering')
-def search(id, min_price, max_price, location): # REFACTOR
-    if id: InputValidator.validate_id(id)
-    
+def search(id, min_price, max_price, location):
+    if id: 
+        InputValidator.validate_id(id)
+
     inventory = InventoryManager()
     data = load_inventory_data(inventory)
 
-    results = []
+    results = filter_results(data, id, min_price, max_price, location)
 
-    if id: results = [item for item in data if item['id'] == id]
-
-    if min_price is not None: results = [item for item in results or data if item.get('price', 0) >= min_price]
-
-    if max_price is not None: results = [item for item in results or data if item.get('price', float('inf')) <= max_price]
-
-    if location: results = [item for item in results or data if item.get('location', '') == location]
-
-    if not results: 
-        message = 'No products found matching the specified criteria.'
-        click.echo(message)
-        logging.error(message)
-    else:
-        for item_data in results:
-            product = Product(item_data['id'], item_data['name'], item_data['quantity'], item_data['price'], item_data['location'])
-            product.format_output()
-
+    display_results(results)
 
 @cli.command()
 @click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
@@ -257,4 +269,4 @@ def inter():
 if __name__ == '__main__':
     cli()
 
- 
+    
