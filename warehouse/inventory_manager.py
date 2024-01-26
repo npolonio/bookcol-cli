@@ -41,4 +41,3 @@ class InventoryManager:
         with open(self.file_path, 'w') as file:
             json.dump(data, file, indent=2)
         logging.info('Inventory saved successfully')
-
