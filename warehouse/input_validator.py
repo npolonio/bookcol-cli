@@ -59,4 +59,3 @@ class InputValidator:
             return True
         else:
             return InputValidator.validation(False, f'Invalid attribute: {input_attribute}')
-
