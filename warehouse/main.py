@@ -4,6 +4,7 @@ import json
 from product import Product
 from inventory_manager import InventoryManager
 from input_validator import InputValidator
+from sqlite_manager import SQLiteManager
 
 
 logging.basicConfig(filename='inventory.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,13 +21,22 @@ def cli():
 # BACKUP/RESTORE ====================================================================================================================================
 
 
-def backup_data(inventory, filename):
+def backup_data(inventory, filename, sqlite_manager=SQLiteManager()):
     try:
-        data = load_inventory_data(inventory)
+        #txt
+        data = InventoryManager.load_inventory(inventory)
         inventory.save_inventory(data, filename)
         message = f'Backup successful. Data saved to {filename}.'
         click.echo(message)
         logging.info(message)
+
+        #sqlite
+        sqlite_manager.create_table()
+        sqlite_manager.save_data(data)
+        message = f'Backup successful. Data saved to {sqlite_manager.filename}.'
+        click.echo(message)
+        logging.info(message)
+
     except Exception as e:
         message = f'Error during backup: {str(e)}'
         click.echo(message)
@@ -97,9 +107,15 @@ def update_item_attribute(item, attribute, value):
         item[attribute] = value
 
 
-def save_inventory(inventory, data):
+def save_inventory(inventory, data, sqlite_manager=SQLiteManager()):
     try:
+        #txt
         inventory.save_inventory(data)
+
+        #sqlite
+        sqlite_manager.create_table()
+        sqlite_manager.save_data(data)
+
     except Exception as e:
         message = f'Error saving inventory: {str(e)}'
         click.echo(message)
