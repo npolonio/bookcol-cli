@@ -33,7 +33,6 @@ class SQLiteManager:
         conn.commit()
         conn.close()
 
-# Modify backup_data and save_inventory functions
 
 def backup_data(inventory, filename, sqlite_manager=SQLiteManager()):
     try:
@@ -58,7 +57,6 @@ def backup_data(inventory, filename, sqlite_manager=SQLiteManager()):
         click.echo(message)
         logging.error(message)
 
-# ...
 
 def save_inventory(inventory, data, sqlite_manager=SQLiteManager()):
     try:
@@ -74,4 +72,3 @@ def save_inventory(inventory, data, sqlite_manager=SQLiteManager()):
         click.echo(message)
         logging.error(message)
 
-# ...
