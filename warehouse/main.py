@@ -18,19 +18,57 @@ def cli():
 # FUNCTIONS ======================================================================================================================================== 
 
 
+# INVENTORY FILE MANIPULATORS =========================================================================================================================
+
+
+def load_inventory_data(inventory): 
+    try: 
+        return inventory.load_inventory()
+    except Exception as e:
+        message = f'Error loading inventory: {str(e)}'
+        click.echo(message)
+        logging.error(message)
+        return []
+
+
+def save_inventory(inventory, data, sqlite_manager=SQLiteManager()):
+    try:
+        inventory.save_inventory(data)
+
+        sqlite_manager.create_table()
+        sqlite_manager.save_data(data)
+
+    except Exception as e:
+        message = f'Error saving inventory: {str(e)}'
+        click.echo(message)
+        logging.error(message)
+
+
+def create_product(id, name, quantity, price, location):
+    return Product(id, name, quantity, price, location)
+
+
+def add_product_to_inventory(data, product, inventory):
+    data.append(product.to_dict)
+    inventory.save_inventory(data)
+
+
+def update_item_attribute(item, attribute, value):
+    if InputValidator.validate_attribute(attribute, value):
+        item[attribute] = value
+
+
 # BACKUP/RESTORE ====================================================================================================================================
 
 
 def backup_data(inventory, filename, sqlite_manager=SQLiteManager()):
     try:
-        #txt
         data = InventoryManager.load_inventory(inventory)
         inventory.save_inventory(data, filename)
         message = f'Backup successful. Data saved to {filename}.'
         click.echo(message)
         logging.info(message)
 
-        #sqlite
         sqlite_manager.create_table()
         sqlite_manager.save_data(data)
         message = f'Backup successful. Data saved to {sqlite_manager.filename}.'
@@ -89,48 +127,6 @@ def restore_inventory(inventory):
         logging.error(message)
 
 
-# INVENTORY FILE MANIPULATORS =========================================================================================================================
-
-
-def load_inventory_data(inventory): 
-    try: 
-        return inventory.load_inventory()
-    except Exception as e:
-        message = f'Error loading inventory: {str(e)}'
-        click.echo(message)
-        logging.error(message)
-        return []
-    
-
-def update_item_attribute(item, attribute, value):
-    if InputValidator.validate_attribute(attribute, value):
-        item[attribute] = value
-
-
-def save_inventory(inventory, data, sqlite_manager=SQLiteManager()):
-    try:
-        #txt
-        inventory.save_inventory(data)
-
-        #sqlite
-        sqlite_manager.create_table()
-        sqlite_manager.save_data(data)
-
-    except Exception as e:
-        message = f'Error saving inventory: {str(e)}'
-        click.echo(message)
-        logging.error(message)
-
-
-def create_product(id, name, quantity, price, location):
-    return Product(id, name, quantity, price, location)
-
-
-def add_product_to_inventory(data, product, inventory):
-    data.append(product.to_dict)
-    inventory.save_inventory(data)
-
-
 # HANDLERS ====================================================================================================================================================
 
 
@@ -154,43 +150,25 @@ def handle_deletion_canceled():
     logging.info(message)
 
 
-def handle_deletion_success(id):
+def handle_success(message, log_message):
     click.echo('-' * 20)
-    click.echo(f'Product with ID {id} deleted successfully.')
+    click.echo(message)
     click.echo('-' * 20)
-    logging.info(f'Product deleted: ID: {id}.')
+    logging.info(log_message)
 
 
 # FILTERS ====================================================================================================================================================
 
 
-def find_item_by_id(data, id): 
+def find_product_by_id(data, id): 
     for item in data:
         if item['id'] == id:
             return item
     return None
 
 
-def filter_results(data, id, min_price, max_price, location):
-    results = []
-
-    if id: 
-        results = filter_by_id(data, id)
-
-    if min_price is not None: 
-        results = filter_by_min_price(results or data, min_price)
-
-    if max_price is not None: 
-        results = filter_by_max_price(results or data, max_price)
-
-    if location: 
-        results = filter_by_location(results or data, location)
-
-    return results
-
-
-def filter_by_id(data, id): # Can I merge it with find_item_by_id?
-    return [item for item in data if item['id'] == id]
+def filter_by_id(data, item_id):
+    return next((item for item in data if item.get('id') == item_id), None)
 
 
 def filter_by_min_price(data, min_price):
@@ -205,10 +183,29 @@ def filter_by_location(data, location):
     return [item for item in data if item.get('location', '') == location]
 
 
+def filter_results(data, item_id, min_price, max_price, location):
+    results = []
+
+    if item_id is not None:
+        item = filter_by_id(data, item_id)
+        results = [item] if item is not None else []
+
+    if min_price is not None:
+        results = filter_by_min_price(results or data, min_price)
+
+    if max_price is not None:
+        results = filter_by_max_price(results or data, max_price)
+
+    if location:
+        results = filter_by_location(results or data, location)
+
+    return results
+
+
 # DISPLAYER ====================================================================================================================================================
 
 
-def display_results(results):
+def display_results_for_search(results):
     if not results: 
         message = 'No products found matching the specified criteria.'
         click.echo(message)
@@ -222,7 +219,7 @@ def display_results(results):
 # VALIDATORS =================================================================================================================================================
             
 
-def validate_inputs(id, quantity, price): 
+def validate_inputs_for_add(id, quantity, price): 
     if not InputValidator.validate_id(id):
         return False
 
@@ -252,7 +249,8 @@ def display(sort_by):
         logging.info(message)
         return
 
-    if sort_by: data.sort(key=lambda x: x.get(sort_by, ''))
+    if sort_by: 
+        data.sort(key=lambda x: x.get(sort_by, ''))
 
     click.echo('-' * 20)
     for item_data in data:
@@ -268,24 +266,69 @@ def display(sort_by):
 @click.option('-p', '--price', prompt=True, type=str, help='Product Price')
 @click.option('-l', '--location', prompt=True, type=str, help='Product Location')
 def add(id, name, quantity, price, location): 
-    if not validate_inputs(id, quantity, price):
+    if not validate_inputs_for_add(id, quantity, price):
         return
 
     inventory = InventoryManager()
     data = load_inventory_data(inventory)
 
-    if not find_item_by_id(data, id) == None:
-        click.echo(f'Product with ID {id} already exists in the inventory.')
+    if not find_product_by_id(data, id) == None:
+        handle_invalid_id(id)
         return     
 
     product = create_product(id, name, quantity, price, location)
     add_product_to_inventory(data, product, inventory)
 
-    click.echo('-' * 20)
-    click.echo('Product added successfully.')
-    click.echo('-' * 20)
-    logging.info(f'Product added: {product}.')
+    handle_success('Product added successfully.', f'Product added: {product}.')
     return
+
+
+@cli.command()
+@click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
+@click.option('--min-price', type=float, help='Minimum price for filtering')
+@click.option('--max-price', type=float, help='Maximum price for filtering')
+@click.option('-l', '--location', type=str, help='Location for filtering')
+def search(id, min_price, max_price, location): #BROKEN
+    if id: 
+        try: 
+            InputValidator.validate_id(id)
+        except:
+            handle_invalid_id(id)
+            return
+
+    inventory = InventoryManager()
+    data = load_inventory_data(inventory)
+
+    results = filter_results(data, id, min_price, max_price, location)
+
+    click.echo('-' * 20)
+    display_results_for_search(results)
+    click.echo('-' * 20)
+
+
+@cli.command()
+@click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
+@click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
+@click.option('-v', '--value', prompt=True, help='New value')
+def alter(id, attribute, value): 
+    try:
+        InputValidator.validate_id(id)
+    except:
+        handle_invalid_id(id)
+        return
+
+    inventory = InventoryManager() 
+    data = load_inventory_data(inventory)
+
+    item = find_product_by_id(data, id)
+    if item:
+        update_item_attribute(item, attribute, value)
+        save_inventory(inventory, data)
+
+        handle_success('Product altered successfully.', f'Product altered - ID: {id}.')
+
+    else:
+        handle_product_not_found(id)
 
 
 @cli.command()
@@ -298,7 +341,7 @@ def delete(id):
     inventory = InventoryManager()
     data = load_inventory_data(inventory)
     
-    product_to_delete = find_item_by_id(data, id)
+    product_to_delete = find_product_by_id(data, id)
 
     if not product_to_delete:
         handle_product_not_found(id)
@@ -313,52 +356,8 @@ def delete(id):
     filtered_data = [item for item in data if item['id'] != id]
     
     save_inventory(inventory, filtered_data)
-    handle_deletion_success(id)
-
-
-@cli.command()
-@click.option('-i', '--id', prompt=True, type=int, help='Product ID to search')
-@click.option('--min-price', type=float, help='Minimum price for filtering')
-@click.option('--max-price', type=float, help='Maximum price for filtering')
-@click.option('-l', '--location', type=str, help='Location for filtering')
-def search(id, min_price, max_price, location):
-    if id: 
-        InputValidator.validate_id(id)
-
-    inventory = InventoryManager()
-    data = load_inventory_data(inventory)
-
-    results = filter_results(data, id, min_price, max_price, location)
-
-    click.echo('-' * 20)
-    display_results(results)
-    click.echo('-' * 20)
-
-
-@cli.command()
-@click.option('-i', '--id', prompt=True, type=int, help='Product ID to alter')
-@click.option('-a', '--attribute', prompt=True, type=click.Choice(['name', 'quantity', 'price', 'location']), help='Attribute to alter (name, quantity, price, location)')
-@click.option('-v', '--value', prompt=True, help='New value')
-def alter(id, attribute, value): 
-    InputValidator.validate_id(id)
-    inventory = InventoryManager() 
-    data = load_inventory_data(inventory)
-
-    item = find_item_by_id(data, id)
-    if item:
-        update_item_attribute(item, attribute, value)
-        save_inventory(inventory, data)
-        click.echo('-' * 20)
-        click.echo('Product altered successfully.')
-        click.echo('-' * 20)
-        logging.info(f'Product altered - ID: {id}.')
-
-    else:
-        message = f'Product with ID {id} not found in the inventory.'
-        click.echo('-' * 20)
-        click.echo(message)
-        click.echo('-' * 20)
-        logging.info(message)
+    #handle_deletion_success(id)
+    handle_success(f'Product with ID {id} deleted successfully.', f'Product deleted: ID: {id}.')
 
 
 @cli.command()
