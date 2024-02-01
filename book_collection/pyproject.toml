@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "book_collection"
+version = "0.1.0"
+description = "CLI app for managing a book collection"
+authors = ["Nicolau Polonio <nicolau.polonio@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+click = "^8.0.0"
+inquirer = "^2.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+book_collection = 'book_collection.__main__:cli'
