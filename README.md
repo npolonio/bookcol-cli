@@ -1,4 +1,4 @@
-# Book Collection CLI App
+# bookcol cli
 
 This CLI app helps you manage your book collection.
 
