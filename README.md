@@ -4,4 +4,4 @@
 ## Installation
 
 ```bash
-pip install book_collection
+pip install bookcol
