@@ -1,6 +1,5 @@
 # bookcol cli
 
-This CLI app helps you manage your book collection.
 
 ## Installation
 
