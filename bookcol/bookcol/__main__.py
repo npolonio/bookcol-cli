@@ -1,6 +1,6 @@
 import click
 import inquirer
-import logging
+from .db import setup_database
 from . import commands
 
 
@@ -39,13 +39,26 @@ def menu():
     ]
 
     answer = inquirer.prompt(questions)
-    command_name = answer['menu_choice'].lower().replace(' ', '_')
 
-    try:
-        cli(['invoke', command_name])
-    except click.ClickException as e:
-        click.echo(f'Error: {e}')
-        logging.error(e)
+    if answer['menu_choice'] == 'Add a book':
+        cli(['add'])
+    elif answer['menu_choice'] == 'Alter a book':
+        cli(['alter'])
+    elif answer['menu_choice'] == 'Delete a book':
+        cli(['delete'])
+    elif answer['menu_choice'] == 'Search for a book':
+        cli(['search'])
+    elif answer['menu_choice'] == 'Display all books':
+        cli(['display'])
+    elif answer['menu_choice'] == 'Filter books':
+        cli(['filter'])
+    elif answer['menu_choice'] == 'Backup collection':
+        cli(['backup'])
+    elif answer['menu_choice'] == 'Restore collection':
+        cli(['restore'])
+    elif answer['menu_choice'] == 'Exit':
+        click.echo('Goodbye!')
+        exit()
 
 
 if __name__ == "__main__":
