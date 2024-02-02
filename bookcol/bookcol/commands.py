@@ -83,6 +83,8 @@ def alter(title, author):
         book_index = next((index for index, book in enumerate(books) if book['title'].lower() == title.lower() and book['author'].lower() == author.lower()), None)
 
         if book_index is not None:
+            existing_titles = {book['title'].lower() for index, book in enumerate(books) if index != book_index}
+
             questions = [
                 inquirer.Text('title', message='Title of the book', default=books[book_index]['title']),
                 inquirer.Text('author', message='Author of the book', default=books[book_index]['author']),
@@ -91,6 +93,9 @@ def alter(title, author):
             ]
 
             answers = inquirer.prompt(questions)
+
+            if answers['title'].lower() in existing_titles:
+                raise click.ClickException(f'A book with the title "{answers["title"]}" by {answers["author"]} already exists.')
 
             if answers['title']:
                 books[book_index]['title'] = answers['title']
@@ -115,6 +120,8 @@ def alter(title, author):
         logging.error(e)
 
     menu()
+
+
 
 
 
