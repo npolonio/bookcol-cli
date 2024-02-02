@@ -20,6 +20,7 @@ def save_to_txt(books, file_name):
 
 # Function to save the collection to the SQLite3 database
 def save_to_db(books):
+    setup_database()
     try:
         with sqlite3.connect('book_collection.db') as conn:
             c = conn.cursor()
@@ -48,6 +49,13 @@ def add(title, author, pages, read):
     backup_collection()
     try:
         books = load_books()
+
+        # Check if a book with the same title and author already exists
+        existing_book = next((book for book in books if book['title'].lower() == title.lower() and book['author'].lower() == author.lower()), None)
+
+        if existing_book:
+            raise click.ClickException(f'A book with the title "{title}" and the same author already exists.')
+
         book = {'title': title, 'author': author, 'pages': pages, 'read': read}
         books.append(book)
         save_to_txt(books, 'book_collection.txt')
@@ -59,19 +67,20 @@ def add(title, author, pages, read):
     except click.ClickException as e:
         click.echo(f'Error: {e}')
         logging.error(e)
-    
+
     menu()
 
 
-# ORIGINAL - Alter command to modify a book's attributes
+
+# Alter command to modify a book's attributes
 @cli.command()
-def alter():
+@click.option('-t', '--title', prompt='Title', type=str, help='Title of the book')
+@click.option('-a', '--author', prompt='Author', type=str, help='Author of the book')
+def alter(title, author):
     backup_collection()
     try:
-        title = click.prompt('Title of the book to alter', type=str)
-
         books = load_books()
-        book_index = next((index for index, book in enumerate(books) if book['title'].lower() == title.lower()), None)
+        book_index = next((index for index, book in enumerate(books) if book['title'].lower() == title.lower() and book['author'].lower() == author.lower()), None)
 
         if book_index is not None:
             questions = [
@@ -95,11 +104,11 @@ def alter():
             save_to_txt(books, 'book_collection.txt')
             save_to_db(books)
 
-            message = f'Book "{title}" altered successfully.'
+            message = f'Book "{title}" by {author} altered successfully.'
             click.echo(message)
             logging.info(message)
         else:
-            click.echo(f'Book with title "{title}" not found.')
+            click.echo(f'Book with title "{title}" and author "{author}" not found.')
 
     except click.ClickException as e:
         click.echo(f'Error: {e}')
@@ -108,23 +117,25 @@ def alter():
     menu()
 
 
+
 # Delete command to remove a book from the collection
 @cli.command()
 @click.option('-t', '--title', prompt='Title', type=str, help='Title of the book')
-def delete(title):
+@click.option('-a', '--author', prompt='Author', type=str, help='Author of the book')
+def delete(title, author):
     backup_collection()
     try:
         books = load_books()
-        matching_books = [book for book in books if book['title'].lower() == title.lower()]
+        matching_books = [book for book in books if book['title'].lower() == title.lower() and book['author'].lower() == author.lower()]
 
         if not matching_books:
-            raise click.ClickException(f'Error: Book with title "{title}" not found.')
+            raise click.ClickException(f'Error: Book with title "{title}" and author "{author}" not found.')
 
-        filtered_books = [book for book in books if book['title'].lower() != title.lower()]
+        filtered_books = [book for book in books if book['title'].lower() != title.lower() or book['author'].lower() != author.lower()]
         save_to_txt(filtered_books, 'book_collection.txt')
         save_to_db(filtered_books)
 
-        confirmation = click.confirm(f'Are you sure you want to delete the book with title "{title}"?')
+        confirmation = click.confirm(f'Are you sure you want to delete the book with title "{title}" and author "{author}"?')
 
         if not confirmation:
             message = 'Deletion cancelled.'
@@ -132,7 +143,7 @@ def delete(title):
             logging.info(message)
             return
 
-        message = f'Book "{title}" deleted successfully.'
+        message = f'Book "{title}" by {author} deleted successfully.'
         click.echo(message)
         logging.info(message)
     except click.ClickException as e:
@@ -326,4 +337,3 @@ def menu():
     elif answer['menu_choice'] == 'Exit':
         click.echo('Goodbye!')
         exit()
-
