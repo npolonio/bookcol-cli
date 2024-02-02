@@ -4,22 +4,9 @@ import json
 import logging
 import inquirer
 import os
+from .db import setup_database
 
 logging.basicConfig(filename='books_collection.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# SQLite3 database setup
-conn = sqlite3.connect('book_collection.db')
-c = conn.cursor()
-c.execute('''
-    CREATE TABLE IF NOT EXISTS books (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        author TEXT,
-        pages INTEGER,
-        read INTEGER DEFAULT 0
-    )
-''')
-conn.commit()
 
 
 # Function to save the collection to a .txt file
@@ -34,11 +21,13 @@ def save_to_txt(books, file_name):
 # Function to save the collection to the SQLite3 database
 def save_to_db(books):
     try:
-        c.execute('DELETE FROM books')
-        for book in books:
-            c.execute('INSERT INTO books (title, author, pages, read) VALUES (?, ?, ?, ?)',
-                      (book['title'], book['author'], book['pages'], book['read']))
-        conn.commit()
+        with sqlite3.connect('book_collection.db') as conn:
+            c = conn.cursor()
+            c.execute('DELETE FROM books')
+            for book in books:
+                c.execute('INSERT INTO books (title, author, pages, read) VALUES (?, ?, ?, ?)',
+                          (book['title'], book['author'], book['pages'], book['read']))
+            conn.commit()
     except Exception as e:
         raise click.ClickException(f"Error saving to database: {e}")
 
@@ -317,10 +306,24 @@ def menu():
     ]
 
     answer = inquirer.prompt(questions)
-    command_name = answer['menu_choice'].lower().replace(' ', '_')
 
-    try:
-        cli(['invoke', command_name])
-    except click.ClickException as e:
-        click.echo(f'Error: {e}')
-        logging.error(e)
+    if answer['menu_choice'] == 'Add a book':
+        cli(['add'])
+    elif answer['menu_choice'] == 'Alter a book':
+        cli(['alter'])
+    elif answer['menu_choice'] == 'Delete a book':
+        cli(['delete'])
+    elif answer['menu_choice'] == 'Search for a book':
+        cli(['search'])
+    elif answer['menu_choice'] == 'Display all books':
+        cli(['display'])
+    elif answer['menu_choice'] == 'Filter books':
+        cli(['filter'])
+    elif answer['menu_choice'] == 'Backup collection':
+        cli(['backup'])
+    elif answer['menu_choice'] == 'Restore collection':
+        cli(['restore'])
+    elif answer['menu_choice'] == 'Exit':
+        click.echo('Goodbye!')
+        exit()
+
