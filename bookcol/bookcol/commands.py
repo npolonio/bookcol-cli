@@ -8,9 +8,17 @@ from .db import setup_database
 
 logging.basicConfig(filename='books_collection.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-# Function to save the collection to a .txt file
 def save_to_txt(books, file_name):
+    """
+    Save the collection to a .txt file.
+
+    Args:
+        books (list): List of dictionaries representing books.
+        file_name (str): Name of the file to save the collection to.
+
+    Raises:
+        click.ClickException: If an error occurs while saving to a text file.
+    """
     try:
         with open(file_name, 'w') as file:
             json.dump(books, file)
@@ -18,8 +26,16 @@ def save_to_txt(books, file_name):
         raise click.ClickException(f"Error saving to txt: {e}")
 
 
-# Function to save the collection to the SQLite3 database
 def save_to_db(books):
+    """
+    Save the collection to the SQLite3 database.
+
+    Args:
+        books (list): List of dictionaries representing books.
+
+    Raises:
+        click.ClickException: If an error occurs while saving to the database.
+    """
     setup_database()
     try:
         with sqlite3.connect('book_collection.db') as conn:
@@ -33,19 +49,22 @@ def save_to_db(books):
         raise click.ClickException(f"Error saving to database: {e}")
 
 
-# Click command group
 @click.group()
 def cli():
+    """
+    Command-line interface for managing a book collection.
+    """
     pass
 
-
-# Add command to add a book to the collection
 @cli.command()
 @click.option('-t', '--title', prompt='Title', type=str, help='Title of the book')
 @click.option('-a', '--author', prompt='Author', type=str, help='Author of the book')
 @click.option('-p', '--pages', prompt='Pages', type=int, help='Number of pages in the book')
 @click.option('--read', is_flag=True, prompt='Have you finished reading this book?', help='Mark the book as read')
 def add(title, author, pages, read):
+    """
+    Add a book to the collection.
+    """
     backup_collection()
     try:
         books = load_books()
@@ -71,12 +90,13 @@ def add(title, author, pages, read):
     menu()
 
 
-
-# Alter command to modify a book's attributes
 @cli.command()
 @click.option('-t', '--title', prompt='Title', type=str, help='Title of the book')
 @click.option('-a', '--author', prompt='Author', type=str, help='Author of the book')
 def alter(title, author):
+    """
+    Alter a book's attributes.
+    """
     backup_collection()
     try:
         books = load_books()
@@ -122,14 +142,13 @@ def alter(title, author):
     menu()
 
 
-
-
-
-# Delete command to remove a book from the collection
 @cli.command()
 @click.option('-t', '--title', prompt='Title', type=str, help='Title of the book')
 @click.option('-a', '--author', prompt='Author', type=str, help='Author of the book')
 def delete(title, author):
+    """
+    Delete a book from the collection.
+    """
     backup_collection()
     try:
         books = load_books()
@@ -160,10 +179,12 @@ def delete(title, author):
     menu()
 
 
-# Search command to find a book by title
 @cli.command()
 @click.option('-t', '--title', prompt='Title', help='Title of the book')
 def search(title):
+    """
+    Search for a book by title.
+    """
     try:
         books = load_books()
         matching_books = [book for book in books if title.lower() in book['title'].lower()]
@@ -179,9 +200,11 @@ def search(title):
     menu()
 
 
-# Display command to show all books in the collection
 @cli.command()
 def display():
+    """
+    Display all books in the collection.
+    """
     try:
         books = load_books()
         display_books(books)
@@ -192,9 +215,11 @@ def display():
     menu()
 
 
-# Filter command to filter books by certain attributes
 @cli.command()
 def filter():
+    """
+    Filter books by certain attributes.
+    """
     try:
         books = load_books()
         filtered_books = books
@@ -241,18 +266,22 @@ def filter():
     menu()
 
 
-# Backup command to save the collection to a backup file
 @cli.command()
 def backup():
+    """
+    Backup the collection to a backup file.
+    """
     backup_collection()
     message = 'Backup created successfully.'
     click.echo(message)
     menu()
 
 
-# Restore command to restore the collection from a backup file
 @cli.command()
 def restore():
+    """
+    Restore the collection from a backup file.
+    """
     try:
         if os.path.exists('book_backup.txt'):  # Check if the backup file exists
             backup_books = load_books('book_backup.txt')
@@ -271,8 +300,10 @@ def restore():
     menu()
 
 
-#Function to save the previous state to another file, to be used only internally
 def backup_collection():
+    """
+    Save the previous state to another file (used internally).
+    """
     try:
         books = load_books()
         save_to_txt(books, 'book_backup.txt')  # Save to a backup file
@@ -284,8 +315,16 @@ def backup_collection():
         logging.error(e)
 
 
-# Function to load books from the .txt file
 def load_books(file_name='book_collection.txt'):
+    """
+    Load books from the .txt file.
+
+    Args:
+        file_name (str): Name of the file to load books from. Default is 'book_collection.txt'.
+
+    Returns:
+        list: List of dictionaries representing books.
+    """
     try:
         with open(file_name, 'r') as file:
             content = file.read()
@@ -299,14 +338,22 @@ def load_books(file_name='book_collection.txt'):
     return books
 
 
-# Function to display books
 def display_books(books):
+    """
+    Display books.
+
+    Args:
+        books (list): List of dictionaries representing books.
+    """
     for book in books:
         read_status = 'Read' if book['read'] else 'Not Read'
         click.echo(f'Title: {book["title"]}, Author: {book["author"]}, Pages: {book["pages"]}, Status: {read_status}')
 
 
 def menu():
+    """
+    Display menu options and execute corresponding commands.
+    """
     questions = [
         inquirer.List('menu_choice',
                       message='Choose an action:',
