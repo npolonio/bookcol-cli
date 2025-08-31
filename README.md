@@ -108,7 +108,7 @@ python -m bookcol
 
 ## 📜 Licença
 
-Este projeto é distribuído sob a licença **MIT**.
+Este projeto foi desenvolvido apenas para fins acadêmicos e de estudo.
 Sinta-se livre para usar, modificar e compartilhar.
 
 ---
